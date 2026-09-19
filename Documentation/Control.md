@@ -15,9 +15,9 @@ Colonne **Action** à remplir au fur et à mesure de la conception du gameplay.
 
 | Axe (DirectInput) | Contrôle physique                     | Type        | Action | Notes (courbe, zone morte, inversion) |
 |-------------------|---------------------------------------|-------------|--------|----------------------------------------|
-| X                 | Manche gauche / droite                | Analogique  |        |                                        |
-| Y                 | Manche avant / arrière                | Analogique  |        |                                        |
-| Rz                | Torsion du manche (twist)             | Analogique  |        |                                        |
+| X                 | Manche gauche / droite                | Analogique  | Tête : roulis (position absolue) | Routine VISEE_TETE, ±30° |
+| Y                 | Manche avant / arrière                | Analogique  | Tête : tangage (position absolue) | Routine VISEE_TETE, ±45°, avant = regarder en bas |
+| Rz                | Torsion du manche (twist)             | Analogique  | Tête : lacet (position absolue) | Routine VISEE_TETE, ±90° |
 | Slider            | Molette/levier sur le socle           | Analogique  |        |                                        |
 
 ### 1.2 Chapeau (POV)
@@ -76,8 +76,8 @@ Disposition (vue de dessus, pilote face au joystick) :
 | Axe (DirectInput) | Contrôle physique                          | Type        | Action | Notes (courbe, zone morte, inversion) |
 |-------------------|--------------------------------------------|-------------|--------|----------------------------------------|
 | Z                 | Manette des gaz principale                 | Analogique  |        | Vers le pilote = positif               |
-| X                 | Mini-stick gauche / droite                 | Analogique  |        |                                        |
-| Y                 | Mini-stick haut / bas                      | Analogique  |        | Bas = positif                          |
+| X                 | Mini-stick gauche / droite                 | Analogique  | Gyroscope principal : déséquilibre latéral | Entrée directe (prio 1000) ; secours clavier ←/→ |
+| Y                 | Mini-stick haut / bas                      | Analogique  | Gyroscope principal : déséquilibre avant/arrière | Bas = positif (inversé en jeu) ; secours clavier ↑/↓ |
 | Rz                | Palonnier à bascule (rocker) sous la poignée | Analogique |        | Droite = positif                       |
 | Slider 0          | Molette rotative « antenne »               | Analogique  |        |                                        |
 
@@ -161,6 +161,7 @@ Pistes de fonctions (à préciser) :
 
 | Domaine                         | Exemples d'actions                                        | Touche(s) | Notes |
 |---------------------------------|-----------------------------------------------------------|-----------|-------|
+| Console de configuration        | Ouvrir la console ; `exit` la ferme, `quit` quitte le jeu | Espace    | Implémenté (écran du cockpit) |
 | Répartition de puissance        | Moteurs / armes / systèmes / boucliers                    |           |       |
 | Refroidissement                 | Priorité de refroidissement par bloc, purge thermique     |           |       |
 | Gestion des dégâts              | Isoler un bloc, couper une articulation, rerouter         |           |       |
