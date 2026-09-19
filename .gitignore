@@ -1,0 +1,12 @@
+# Unreal Engine - fichiers générés
+Game/Binaries/
+Game/Intermediate/
+Game/Saved/
+Game/DerivedDataCache/
+Game/.vs/
+Game/*.sln
+Game/.vsconfig
+*.VC.db
+*.opensdf
+*.sdf
+*.suo
