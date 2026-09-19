@@ -53,88 +53,48 @@ déplaçables**). Traitement **au cas par cas**.
 
 ---
 
-## 2. Gyroscopes
+## 2. Gyroscope principal et stabilité
 
-### 2.1 Gyroscope principal (torse)
+> **Révision après le premier prototype jouable** : la simulation ne doit pas prendre le pas sur le gameplay.
+> Les « gyroscopes secondaires » (stabilisateurs par bloc) **n'existent plus**. Le pilote ne contrôle plus
+> l'équilibre : il contrôle le **mouvement**.
 
-- Situé dans le **torse**.
-- **Seul gyroscope entièrement contrôlable.**
-- Il définit l'**orientation du torse par rapport à la gravité**.
-- Le torse étant la racine du mecha, il sert de **référence à tout le mecha** : les autres
-  blocs se positionnent par rapport au torse.
+### 2.1 Un mecha stable par défaut
 
-**Commandes possibles** (par le pilote ou les routines, au choix) :
+- Le mecha est stable **au même titre qu'un personnage d'un autre jeu** : il tient debout seul et pose ses pieds
+  pour suivre son corps.
+- Les **centres de gravité par bloc** et l'**inertie** (masse, accélération limitée) sont conservés.
+- En mouvement, le mecha **se penche de manière cohérente** : c'est de l'**animation** (quasi nulle en marche,
+  nette en course, légère anticipation à l'accélération), même si elle déplace réellement le centre de gravité.
 
-| Type de commande          | Exemple                                              |
-|---------------------------|------------------------------------------------------|
-| Orientation cible         | « Torse incliné de 10° vers l'avant »                |
-| Vitesse de rotation       | « Tourner à 20°/s en lacet »                         |
-| Force (couple) de rotation | « Appliquer tel couple en roulis »                  |
-| **Position cible XYZ**    | Déplacer le torse lui-même (pas seulement l'orienter) |
+### 2.2 Gyroscope principal = deux stats
 
-> La commande en position s'éloigne de ce que fait réellement un gyroscope : c'est une
-> **approximation assumée** pour rendre le gameplay faisable.
+Le gyroscope principal est un **composant du torse** (il peut être détruit, consomme de l'énergie et produit de la
+chaleur), mais ce n'est **plus un vrai gyroscope simulé** : il se résume à deux statistiques.
 
-**Adaptation des membres** : quand le torse est déplacé (ou orienté), les articulations
-**s'adaptent automatiquement** (ex. abaisser le torse → les genoux plient), mais
-uniquement dans leur **zone suiveuse**. Chaque articulation a sa propre zone suiveuse,
-et **ne s'adapte pas au-delà**.
+| Stat          | Plage     | Rôle                                                                             |
+|---------------|-----------|----------------------------------------------------------------------------------|
+| **Stabilité** | 1 … N     | Diviseur des forces extérieures appliquées au torse                              |
+| **Inertie**   | ≥ 0 (kN)  | Force minimale (après division) pour que le torse bouge                          |
 
-- **Zone suiveuse fixe par composant** : définie en dur **pour chaque axe** de
-  l'articulation, selon le modèle d'articulation. Elle n'est pas réglable en jeu (ni par
-  les routines) ; elle se change **à l'atelier**, en changeant de composant, comme les blocs.
-- **Dépassement** : si une commande du torse sort de la zone suiveuse d'une articulation,
-  **le torse est bloqué** à la limite.
-- ⚠️ **Limites combinées** : la limite réelle du torse dépend de la **combinaison** des
-  zones suiveuses de toutes les articulations concernées (ex. abaisser le torse sollicite
-  hanches, genoux et chevilles des deux jambes ; le torse s'arrête dès que l'une d'elles
-  atteint sa limite). À surveiller de près lors de la conception et du réglage.
+Règle : quand le mecha subit une **force extérieure** (gravité, impact…) qui devrait faire bouger son torse :
 
-**Limites** : le gyroscope principal a un **couple max**, **consomme de l'énergie** et
-**produit de la chaleur**. Il peut être **endommagé** avec le torse.
+```
+F_effective = F / Stabilité
+si |F_effective| <= Inertie  -> absorbée, le torse ne bouge pas
+sinon                       -> seule la part (F_effective - Inertie) fait bouger le torse
+```
 
-### 2.2 Gyroscopes secondaires (blocs) = stabilité
+- Seul le **torse** compte : c'est le « vrai » mecha. Un bras écarté de force, par exemple, n'entre pas en jeu.
+- Le **pilotage** (déplacement, rotation, tête) n'est **pas** une force extérieure.
+- **Gravité** : si le centre de gravité sort du polygone d'appui, le couple de bascule (ramené à une force
+  horizontale) passe par la même règle ; s'il n'est pas absorbé, le mecha tombe.
+- **Impact** : l'excédent donne un recul (Δv = excédent × durée / masse), le torse encaisse puis revient ; au-delà
+  d'un recul seuil, le mecha tombe.
+- **Gyroscope détruit** : stabilité 1, inertie 0 (plus aucun filtrage).
 
-- Chaque bloc dispose d'un « gyroscope » secondaire, mais **ce n'est pas un vrai gyroscope
-  dans le lore** : c'est un **stabilisateur** (moteurs d'articulation + IA embarquée) qui
-  tient le membre en place. Le terme « gyroscope secondaire » est conservé dans les docs
-  pour le moment.
-- On ne lui donne **pas de commandes d'orientation** comme au gyroscope principal ; seul
-  son **niveau de stabilité** est réglable (par les routines, voir plus bas).
-- Par défaut, chaque bloc **tente de maintenir sa position relative au torse**.
-- Cette tenue est modélisée par un **paramètre de stabilité**, **porté par le bloc** (pas
-  par l'articulation) :
-
-| Situation                                   | Stabilité                                    |
-|---------------------------------------------|----------------------------------------------|
-| Bloc au repos, position tenue               | Haute : le bloc résiste aux perturbations    |
-| Juste avant une action d'un moteur          | **Baisse** pour autoriser le mouvement       |
-| Une fois la nouvelle position atteinte      | **Remonte** : la nouvelle position est tenue |
-
-- La **force** de cette tenue varie selon les **réglages**, les **routines**, les
-  **contrôles**, etc.
-- Les **routines peuvent modifier la stabilité directement** (ex. bras « raide » pour
-  parer, « souple » pour amortir un choc).
-
-**Pourquoi par bloc** : des blocs d'extrémité comme la **main** ou le **pied** peuvent avoir
-une stabilité **bien plus élevée** que le bras ou la jambe, ce qui **force le reste du
-membre à suivre leur mouvement** (la main « mène », le bras suit).
-
-**Le stabilisateur est un composant** de chaque membre : il peut être **endommagé**,
-**surchauffer** ou **manquer d'énergie**, ce qui **réduit la stabilité** du bloc.
-
-### 2.3 Lien avec les autres systèmes
-
-- **Impacts** : un choc déplace un membre en fonction de la force reçue face à sa
-  stabilité. Une routine qui vise une pose continue ensuite depuis la position déviée
-  (voir `Routines.md` §3.3).
-- **Routines** : elles agissent sur le rig ; la stabilité est la « raideur » avec laquelle
-  le rig tient sa pose face au monde extérieur, et elles peuvent la régler bloc par bloc.
-- **État du mecha** : dégâts, surchauffe et manque d'énergie du stabilisateur réduisent la
-  stabilité.
-
----
-
+Valeurs du prototype : stabilité 4, inertie 150 kN (un impact de 400 kN est absorbé, 5 000 kN fait reculer,
+40 000 kN fait tomber). Commandes terminal de test : `gyro`, `impact <kN> [direction]`.
 ## 3. Physique de base de l'équilibre
 
 Rappel des règles physiques utilisées (sans règle de gameplay ajoutée) :
@@ -148,9 +108,7 @@ Rappel des règles physiques utilisées (sans règle de gameplay ajoutée) :
 - Les accélérations (marche, coups, recul d'une arme, impacts) s'ajoutent à la gravité et
   déplacent l'équilibre dynamique.
 
-Exemple (illustratif, repris de `Routines.md` §3.4) : le pilote incline le torse avec le
-gyroscope principal → le centre de gravité sort de la zone d'appui → une routine
-d'équilibre fait un pas pour compenser → le mecha avance.
+> Ancien exemple (marche par déséquilibre volontaire via le gyroscope) : **abandonné** après le premier prototype, le pilote contrôle désormais directement le mouvement.
 
 ---
 
@@ -161,10 +119,8 @@ d'équilibre fait un pas pour compenser → le mecha avance.
   soudant les corps, ou calcul du centre de gravité combiné côté code.
 - Centre de gravité global : calculé à chaque tick (somme pondérée), utile pour le HUD et
   les routines.
-- Gyroscope principal : contrôle de l'orientation du torse (couple appliqué ou orientation
-  cible).
-- Stabilité : **raideur / amortissement** des drives de contraintes (ou du Physical
-  Animation) de chaque bloc, abaissés pendant un mouvement puis remontés.
+- Gyroscope principal : deux stats appliquées dans `AMech::ApplyExternalForce` et `AMech::CheckGravity`.
+- Inclinaison en mouvement : animation dans `AMech::UpdateLean`.
 
 ---
 
@@ -175,13 +131,9 @@ d'équilibre fait un pas pour compenser → le mecha avance.
 | Données par bloc            | Poids + centre de gravité défini en dur ; le reste = physique de base |
 | Prise universelle           | Centre de gravité combiné = moyenne pondérée par le poids        |
 | Modules de centre de gravité | Contrepoids et autres, au cas par cas                           |
-| Gyroscope principal         | Dans le torse, seul entièrement contrôlable, référence de tout le mecha |
-| Gyroscopes secondaires      | Pas réels dans le lore : moteurs + IA, non contrôlables, modélisés par un paramètre de stabilité |
-| Stabilité                   | Portée par le bloc ; baisse avant une action moteur, remonte une fois la position atteinte ; modifiable par les routines |
-| Commandes du gyroscope principal | Orientation cible, vitesse, couple, ou position XYZ (approximation assumée) |
-| Limites du gyroscope principal | Couple max, énergie, chaleur ; endommageable avec le torse     |
-| Main / pied                 | Peuvent avoir une stabilité très supérieure pour que le membre suive |
-| Stabilisateur               | Composant de chaque membre ; dégâts, surchauffe, manque d'énergie réduisent la stabilité |
+| Gyroscope principal         | Composant du torse réduit à deux stats : stabilité (1..N, diviseur) et inertie (seuil) ; filtre les forces extérieures sur le torse |
+| Gyroscopes secondaires      | Supprimés : le mecha est stable par défaut, le pilote contrôle le mouvement et non l'équilibre |
+| Gyroscope comme composant   | Endommageable/destructible (détruit = stabilité 1, inertie 0), consomme et chauffe (pas encore simulé) |
 | Adaptation au torse         | Automatique, limitée à la **zone suiveuse** propre à chaque articulation |
 | Zone suiveuse               | Définie en dur par axe et par modèle d'articulation ; modifiable seulement à l'atelier |
 | Dépassement de zone suiveuse | Le torse est bloqué ; limite réelle = combinaison des zones de toutes les articulations concernées |

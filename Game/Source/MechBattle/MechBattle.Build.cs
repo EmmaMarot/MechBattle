@@ -16,7 +16,7 @@ public class MechBattle : ModuleRules
 			"UMG",
 			"Slate",
 			"SlateCore",
-			"AnimationCore"
+			"PhysicsCore"
 		});
 	}
 }

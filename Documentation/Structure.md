@@ -20,7 +20,8 @@ Le mecha est un assemblage de **blocs rigides** reliés par des **articulations*
 | #  | Bloc               | Qté | Côté | Parent        | Notes                                              |
 |----|--------------------|-----|------|---------------|----------------------------------------------------|
 | 1  | Torse              | 1   | —    | *(racine)*    | **Cockpit + générateur principal.** Détruit = mort du pilote = fin de partie |
-| 2  | Tête               | 1   | —    | Torse         | Caméra et autres capteurs                          |
+| 2  | Cou                | 1   | —    | Torse         | Surélève le pivot de la tête au-dessus du torse    |
+| 2b | Tête               | 1   | —    | Cou           | Caméra et autres capteurs                          |
 | 3  | Backpack           | 1   | —    | Torse         | **Propulseurs principaux**. Extensions ignorées pour l'instant |
 | 4  | Bassin             | 1   | —    | Torse         | Porte les jambes                                   |
 | 5  | Épaule             | 2   | G/D  | Torse         |                                                    |
@@ -32,7 +33,7 @@ Le mecha est un assemblage de **blocs rigides** reliés par des **articulations*
 | 11 | Pied               | 2   | G/D  | Jambe         |                                                    |
 | —  | Extension backpack | —   | —    | Backpack      | **Hors périmètre pour le moment**                  |
 
-Total : **17 blocs**.
+Total : **18 blocs** (cou ajouté lors du premier prototype).
 
 ### 1.2 Hiérarchie
 
@@ -41,7 +42,7 @@ reste du mecha en dépend.
 
 ```
 Torse (racine) — cockpit, générateur principal
-├── Tête
+├── Cou ── Tête
 ├── Backpack — propulseurs principaux
 │   ├── (prises de rangement ?)
 │   └── (extensions — plus tard)
@@ -172,8 +173,7 @@ Total : **16 articulations**.
 | Moteurs d'articulation    | Chaque articulation                 | Mouvement des membres                        |
 | Générateurs secondaires   | Membres — **au cas par cas**        | Appoint / autonomie locale                   |
 | Propulseurs secondaires   | Membres — **au cas par cas**        | Manœuvre, stabilisation                      |
-| Gyroscope principal       | Torse                               | Orientation / position du torse, référence du mecha (voir `Equilibre.md`) |
-| Stabilisateurs (« gyroscopes secondaires ») | Chaque bloc       | Tiennent la position du bloc ; endommageables, consomment et chauffent (voir `Equilibre.md`) |
+| Gyroscope principal       | Torse                               | Deux stats (stabilité, inertie) filtrant les forces extérieures sur le torse ; consomme et chauffe (voir `Equilibre.md`) |
 | Processeur (ordinateur de bord) | À définir                     | Exécute les routines ; capacité choisie au montage, consomme et chauffe selon sa puissance (voir `Routines.md` §6) |
 
 - La **répartition de puissance** se fait au clavier (console de cockpit, voir `Control.md`).
@@ -299,6 +299,28 @@ couple disponible aux hanches/genoux/chevilles, propulseurs de stabilisation.
   décide si le mecha y arrive (poids, dégâts).
 - Collisions de frappe via hit events : récupérer la vitesse au point d'impact et la normale.
 - Racine du Physics Asset = **torse** (cohérent avec la hiérarchie).
+
+### 6.6 Animation et locomotion (prototype)
+
+Le mouvement des membres n'est **pas scripté** : un squelette humanoïde invisible (Manny, ×10), le
+« bonhomme bâton », joue des animations classiques (idle / marche / jogging / chute). Le vrai mecha
+cherche à reproduire cette animation sous contrainte physique :
+
+- **Jambes simulées** (Chaos) et tirées vers la pose animée par le **Physical Animation Component**
+  (cibles orientation + position en espace monde, raideur 20 000, amortissement critique 2·√raideur).
+  Si une jambe s'écarte de plus de 3 m de sa cible (coincée), elle y est recalée.
+- **Haut du corps** : pose animée, tournée autour de la taille par la rotation du buste, l'inclinaison
+  en mouvement et les impacts.
+- Les **blocs** sont posés sur les os ; le polygone d'appui vient des pieds posés.
+
+Règles de gabarit (longueur de jambe L = 9 m) :
+
+- **Cadence fixe** (la jambe est un pendule) : un pas = 0,53 · π · √(L/g) ≈ **1,6 s**.
+  L'**amplitude** varie avec la vitesse (idle → marche → jogging dans le blend space).
+- **Marche max** (nombre de Froude 0,7) : v = √(0,7 · g · L) ≈ **7,9 m/s (28 km/h)**. Sans
+  réacteurs, le mecha ne fait que marcher ; les réacteurs avant le font courir (élan, amplitude
+  au-delà de la marche), la cadence ne monte qu'au-delà de l'amplitude maximale.
+- En vol : boucle de chute (jambes pendantes). La transition sol/vol est adoucie par la physique.
 
 ---
 

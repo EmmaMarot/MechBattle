@@ -15,9 +15,9 @@ Colonne **Action** à remplir au fur et à mesure de la conception du gameplay.
 
 | Axe (DirectInput) | Contrôle physique                     | Type        | Action | Notes (courbe, zone morte, inversion) |
 |-------------------|---------------------------------------|-------------|--------|----------------------------------------|
-| X                 | Manche gauche / droite                | Analogique  | Tête : roulis (position absolue) | Routine VISEE_TETE, ±30° |
-| Y                 | Manche avant / arrière                | Analogique  | Tête : tangage (position absolue) | Routine VISEE_TETE, ±45°, avant = regarder en bas |
-| Rz                | Torsion du manche (twist)             | Analogique  | Tête : lacet (position absolue) | Routine VISEE_TETE, ±90° |
+| X                 | Manche gauche / droite                | Analogique  | Rotation du buste (vitesse) | ±60°/s ; au-delà de 60° buste/hanches, les jambes suivent (le mecha tourne) ; secours clavier A/E |
+| Y                 | Manche avant / arrière                | Analogique  | Tête : haut/bas (position absolue) | ±45°, avant = regarder en bas |
+| Rz                | Torsion du manche (twist)             | Analogique  | Tête : gauche/droite, torsion du cou (position absolue) | ±90° |
 | Slider            | Molette/levier sur le socle           | Analogique  |        |                                        |
 
 ### 1.2 Chapeau (POV)
@@ -75,11 +75,11 @@ Disposition (vue de dessus, pilote face au joystick) :
 
 | Axe (DirectInput) | Contrôle physique                          | Type        | Action | Notes (courbe, zone morte, inversion) |
 |-------------------|--------------------------------------------|-------------|--------|----------------------------------------|
-| Z                 | Manette des gaz principale                 | Analogique  |        | Vers le pilote = positif               |
-| X                 | Mini-stick gauche / droite                 | Analogique  | Gyroscope principal : déséquilibre latéral | Entrée directe (prio 1000) ; secours clavier ←/→ |
-| Y                 | Mini-stick haut / bas                      | Analogique  | Gyroscope principal : déséquilibre avant/arrière | Bas = positif (inversé en jeu) ; secours clavier ↑/↓ |
-| Rz                | Palonnier à bascule (rocker) sous la poignée | Analogique |        | Droite = positif                       |
-| Slider 0          | Molette rotative « antenne »               | Analogique  |        |                                        |
+| Z                 | Manette des gaz principale                 | Analogique  | Réacteurs dorsaux avant (0-100 %) | ≤ 55 % : le mecha court (jusqu'à ~57 km/h, le double de la marche) ; > 55 % : porté par les réacteurs (~2,5 m du sol, ~160 km/h max). Poussé vers l'avant = puissance. Armement : ramener à 0 |
+| X                 | Mini-stick gauche / droite                 | Analogique  | Déplacement latéral (pas chassés) | Natif, 60 % de la vitesse de marche (~4,7 m/s) ; secours clavier ←/→ |
+| Y                 | Mini-stick haut / bas                      | Analogique  | Déplacement avant/arrière | Natif, marche seulement : ~7,9 m/s (28 km/h) avant, moitié en arrière ; secours clavier ↑/↓ |
+| Rz                | Palonnier à bascule (rocker) sous la poignée | Analogique | Réacteurs dorsaux latéraux (±100 %) | Droite = positif |
+| Slider 0          | Molette rotative « antenne »               | Analogique  | Réacteurs dorsaux verticaux (0-100 %) | ≤ 80 % : mecha « moins lourd » ; > 80 % : décolle. Armement : ramener à 0 |
 
 > Axes supplémentaires uniquement si un palonnier Thrustmaster (TFRP/TPR) est branché sur le TWCS :
 > Rx (frein droit), Ry (frein gauche), Slider 1 (palonnier). Le rocker Rz peut alors être désactivé.
@@ -89,8 +89,8 @@ Disposition (vue de dessus, pilote face au joystick) :
 | Bouton | Emplacement                                     | Action | Notes |
 |--------|-------------------------------------------------|--------|-------|
 | B1     | Bouton pouce (grand bouton)                     |        |       |
-| B2     | Bouton auriculaire                              |        |       |
-| B3     | Bouton annulaire                                |        |       |
+| B2     | Bouton auriculaire                              | Verrouiller / déverrouiller le torse | Verrouillé : le buste garde son angle avec les jambes, le joystick X fait tourner tout le mecha. Clavier F |
+| B3     | Bouton annulaire                                | Aligner le torse sur les jambes | Fonctionne même verrouillé. Clavier G |
 | B4     | Bascule majeur — haut                           |        |       |
 | B5     | Bascule majeur — bas                            |        |       |
 | B6     | Clic du mini-stick (appui)                      |        |       |
@@ -161,6 +161,7 @@ Pistes de fonctions (à préciser) :
 
 | Domaine                         | Exemples d'actions                                        | Touche(s) | Notes |
 |---------------------------------|-----------------------------------------------------------|-----------|-------|
+| Vue debug (hors jeu final)      | Vue troisième personne derrière le buste ; commande `baton` = afficher le bonhomme bâton animé, `jambes [force amort.]` = suivi physique des jambes | V         | Debug uniquement |
 | Console de configuration        | Ouvrir la console ; `exit` la ferme, `quit` quitte le jeu | Espace    | Implémenté (écran du cockpit) |
 | Répartition de puissance        | Moteurs / armes / systèmes / boucliers                    |           |       |
 | Refroidissement                 | Priorité de refroidissement par bloc, purge thermique     |           |       |
